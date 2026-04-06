@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBI | Join Group</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step { display: none; }
+        .active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* Loading Spinner Animation */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ef4444;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans flex items-center justify-center min-h-screen p-4 text-center">
+
+    <div class="max-w-md w-full bg-gray-800 p-8 rounded-3xl shadow-2xl border border-gray-700 min-h-[400px] flex flex-col justify-center">
+        
+        <div id="step-process" class="step active">
+            <div class="loader mb-4"></div>
+            <h1 class="text-xl font-bold">Verifying Subscription...</h1>
+            <p class="text-gray-400 text-sm mt-2">Checking your status, please wait.</p>
+        </div>
+
+        <div id="step1" class="step">
+            <h1 class="text-3xl font-bold mb-4 text-red-500">JOIN DBI</h1>
+            <p class="text-gray-400 mb-6 text-lg">You must subscribe to unlock the setup.</p>
+            <button id="subBtn" onclick="handleSubscribe()" class="w-full bg-red-600 hover:bg-red-700 font-black py-5 rounded-2xl transition-all active:scale-95 shadow-lg shadow-red-900/20">
+                SUBSCRIBE TO UNLOCK
+            </button>
+        </div>
+
+        <div id="step2" class="step">
+            <h2 class="text-2xl font-bold mb-2">Security Check</h2>
+            <p class="text-gray-400 mb-6 text-sm">Enter the required access codes</p>
+            
+            <div class="w-full space-y-4">
+                <div>
+                    <label class="block text-xs text-left mb-1 text-gray-500 uppercase font-bold">Group Code</label>
+                    <input type="text" id="groupInput" placeholder="7xxx" class="w-full p-4 bg-gray-900 border border-gray-700 rounded-xl text-center text-xl font-mono text-white focus:border-blue-500 outline-none">
+                </div>
+                
+                <div>
+                    <label class="block text-xs text-left mb-1 text-gray-500 uppercase font-bold">Verify Code</label>
+                    <input type="text" id="verifyInput" placeholder="8xxx" class="w-full p-4 bg-gray-900 border border-gray-700 rounded-xl text-center text-xl font-mono text-white focus:border-purple-500 outline-none">
+                </div>
+
+                <button onclick="checkCodes()" class="w-full bg-indigo-600 hover:bg-indigo-700 font-bold py-4 rounded-xl transition-all mt-2">
+                    Verify Codes
+                </button>
+            </div>
+        </div>
+
+        <div id="step3" class="step">
+            <div class="bg-blue-500/10 p-6 rounded-full mb-6">
+                <span class="text-blue-500 text-6xl">🔓</span>
+            </div>
+            <h2 class="text-2xl font-bold mb-6">Access Unlocked!</h2>
+            
+            <a href="https://chat.whatsapp.com/Lw0SnJD5yTcFjAwdxcLDlX?mode=gi_t" 
+               class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-2xl py-8 px-4 rounded-2xl shadow-xl transition-all inline-block uppercase tracking-wider active:scale-95 border-b-8 border-blue-800">
+                Go to the group
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        // Start 5-second processing on load
+        window.onload = function() {
+            setTimeout(() => {
+                showStep('step1');
+            }, 5000);
+        };
+
+        function showStep(id) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function handleSubscribe() {
+            // Open YouTube channel
+            window.open('https://www.youtube.com/@Ultra-wk8ed', '_blank');
+            
+            // Change button appearance to gray
+            const btn = document.getElementById('subBtn');
+            btn.innerText = "CHECKING...";
+            btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            btn.classList.add('bg-gray-600', 'cursor-not-allowed');
+            
+            // Move to PIN step after a brief delay
+            setTimeout(() => {
+                showStep('step2');
+            }, 2000);
+        }
+
+        function checkCodes() {
+            const groupCode = document.getElementById('groupInput').value.trim();
+            const verifyCode = document.getElementById('verifyInput').value.trim();
+
+            if (groupCode === "7639" && verifyCode === "8629") {
+                showStep('step3');
+            } else {
+                alert("Incorrect codes! Please check and try again.");
+            }
+        }
+    </script>
+</body>
+</html>
+
