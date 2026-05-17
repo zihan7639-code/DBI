@@ -1,119 +1,440 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DBI | Join Group</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .step { display: none; }
-        .active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
-        /* Loading Spinner Animation */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #ef4444;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DBI | Access Gate</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #00ff41;
+      --green-dim: #00aa2a;
+      --green-glow: rgba(0,255,65,0.25);
+      --red: #ff3333;
+      --bg: #000000;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,255,65,0.015) 2px,
+        rgba(0,255,65,0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Rain canvas */
+    #matrix {
+      position: fixed;
+      inset: 0;
+      opacity: 0.12;
+      z-index: 0;
+    }
+
+    .gate {
+      position: relative;
+      z-index: 10;
+      width: 420px;
+      background: rgba(0,0,0,0.92);
+      border: 1px solid var(--green-dim);
+      box-shadow: 0 0 40px var(--green-glow), inset 0 0 40px rgba(0,255,65,0.03);
+      padding: 40px 36px 36px;
+      animation: flicker 8s infinite;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .gate::before, .gate::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--green);
+      border-style: solid;
+    }
+    .gate::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .gate::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header .skull {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 8px var(--green));
+    }
+
+    .header h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px var(--green);
+    }
+
+    .header .sub {
+      font-size: 11px;
+      color: var(--green-dim);
+      letter-spacing: 3px;
+      margin-top: 6px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--green-dim);
+      margin: 0 0 28px;
+      opacity: 0.4;
+    }
+
+    .field-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--green-dim);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap .prompt {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      background: rgba(0,255,65,0.04);
+      border: 1px solid var(--green-dim);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      padding: 11px 12px 11px 28px;
+      outline: none;
+      letter-spacing: 2px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="password"]:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 12px var(--green-glow);
+      background: rgba(0,255,65,0.07);
+    }
+
+    input[type="password"].error {
+      border-color: var(--red);
+      box-shadow: 0 0 12px rgba(255,51,51,0.3);
+    }
+
+    input[type="password"].ok {
+      border-color: var(--green);
+      box-shadow: 0 0 16px var(--green-glow);
+    }
+
+    .status-bar {
+      font-size: 11px;
+      letter-spacing: 2px;
+      min-height: 18px;
+      margin-top: 6px;
+      color: var(--red);
+      display: none;
+    }
+    .status-bar.visible { display: block; }
+
+    .cyber-btn {
+      display: block;
+      width: 100%;
+      margin-top: 24px;
+      background: transparent;
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      padding: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .cyber-btn:hover {
+      background: rgba(0,255,65,0.1);
+      box-shadow: 0 0 24px var(--green-glow);
+    }
+
+    .cyber-btn:active {
+      background: rgba(0,255,65,0.2);
+    }
+
+    .cyber-btn.disabled {
+      color: var(--green-dim);
+      border-color: var(--green-dim);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .cyber-btn.disabled:hover { background: transparent; box-shadow: none; }
+
+    /* Step System */
+    .step { display: none; width: 100%; }
+    .step.active { display: block; }
+
+    /* Animations */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    @keyframes flicker { 0%, 98%, 100% { opacity: 1; } 99% { opacity: 0.85; } }
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .loading-bar {
+      width: 0%;
+      height: 2px;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      margin-top: 20px;
+      transition: width 0.8s ease;
+    }
+
+    /* Success Screen Specific */
+    .success-icon {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 16px;
+      text-align: center;
+      filter: drop-shadow(0 0 12px var(--green));
+    }
+    .success-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-align: center;
+      text-shadow: 0 0 20px var(--green);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .success-msg {
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: var(--green-dim);
+      text-align: center;
+      margin-top: 14px;
+      margin-bottom: 24px;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white font-sans flex items-center justify-center min-h-screen p-4 text-center">
+<body>
 
-    <div class="max-w-md w-full bg-gray-800 p-8 rounded-3xl shadow-2xl border border-gray-700 min-h-[400px] flex flex-col justify-center">
-        
-        <div id="step-process" class="step active">
-            <div class="loader mb-4"></div>
-            <h1 class="text-xl font-bold">Verifying Subscription...</h1>
-            <p class="text-gray-400 text-sm mt-2">Checking your status, please wait.</p>
-        </div>
+<canvas id="matrix"></canvas>
 
-        <div id="step1" class="step">
-            <h1 class="text-3xl font-bold mb-4 text-red-500">JOIN DBI</h1>
-            <p class="text-gray-400 mb-6 text-lg">You must subscribe to unlock the setup.</p>
-            <button id="subBtn" onclick="handleSubscribe()" class="w-full bg-red-600 hover:bg-red-700 font-black py-5 rounded-2xl transition-all active:scale-95 shadow-lg shadow-red-900/20">
-                SUBSCRIBE TO UNLOCK
-            </button>
-        </div>
+<div class="gate">
 
-        <div id="step2" class="step">
-            <h2 class="text-2xl font-bold mb-2">Security Check</h2>
-            <p class="text-gray-400 mb-6 text-sm">Enter the required access codes</p>
-            
-            <div class="w-full space-y-4">
-                <div>
-                    <label class="block text-xs text-left mb-1 text-gray-500 uppercase font-bold">Group Code</label>
-                    <input type="text" id="groupInput" placeholder="7xxx" class="w-full p-4 bg-gray-900 border border-gray-700 rounded-xl text-center text-xl font-mono text-white focus:border-blue-500 outline-none">
-                </div>
-                
-                <div>
-                    <label class="block text-xs text-left mb-1 text-gray-500 uppercase font-bold">Verify Code</label>
-                    <input type="text" id="verifyInput" placeholder="8xxx" class="w-full p-4 bg-gray-900 border border-gray-700 rounded-xl text-center text-xl font-mono text-white focus:border-purple-500 outline-none">
-                </div>
+  <div id="step-process" class="step active text-center">
+    <div class="header">
+      <span class="skull" style="animation: pulse 1s infinite;">⬡</span>
+      <h1>SYSTEM INIT</h1>
+      <div class="sub">Verifying Subscription Status...</div>
+    </div>
+    <div class="loading-bar" style="width: 100%; animation: pulse 1s infinite;"></div>
+  </div>
 
-                <button onclick="checkCodes()" class="w-full bg-indigo-600 hover:bg-indigo-700 font-bold py-4 rounded-xl transition-all mt-2">
-                    Verify Codes
-                </button>
-            </div>
-        </div>
+  <div id="step1" class="step">
+    <div class="header">
+      <span class="skull" style="color: var(--red); filter: drop-shadow(0 0 8px var(--red));">⚠</span>
+      <h1 style="color: var(--red); text-shadow: 0 0 10px var(--red);">JOIN DBI</h1>
+      <div class="sub">Subscription Required for Access</div>
+    </div>
+    <hr class="divider"/>
+    <button id="subBtn" class="cyber-btn" onclick="handleSubscribe()">
+      [ SUBSCRIBE TO UNLOCK ]<span class="blink">_</span>
+    </button>
+  </div>
 
-        <div id="step3" class="step">
-            <div class="bg-blue-500/10 p-6 rounded-full mb-6">
-                <span class="text-blue-500 text-6xl">🔓</span>
-            </div>
-            <h2 class="text-2xl font-bold mb-6">Access Unlocked!</h2>
-            
-            <a href="https://chat.whatsapp.com/Lw0SnJD5yTcFjAwdxcLDlX?mode=gi_t" 
-               class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-2xl py-8 px-4 rounded-2xl shadow-xl transition-all inline-block uppercase tracking-wider active:scale-95 border-b-8 border-blue-800">
-                Go to the group
-            </a>
-        </div>
+  <div id="step2" class="step">
+    <div class="header">
+      <span class="skull">⬡</span>
+      <h1>Access Gate</h1>
+      <div class="sub">Restricted System</div>
+    </div>
+    <hr class="divider"/>
 
+    <div class="field-group">
+      <label>01 — Verify Password</label>
+      <div class="input-wrap">
+        <span class="prompt">›</span>
+        <input type="password" id="pass1" placeholder="Enter verify key" autocomplete="off"/>
+      </div>
     </div>
 
-    <script>
-        // Start 5-second processing on load
-        window.onload = function() {
-            setTimeout(() => {
-                showStep('step1');
-            }, 5000);
-        };
+    <div class="field-group">
+      <label>02 — Group Password</label>
+      <div class="input-wrap">
+        <span class="prompt">›</span>
+        <input type="password" id="pass2" placeholder="Enter group key" autocomplete="off"/>
+      </div>
+    </div>
 
-        function showStep(id) {
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
+    <div class="status-bar" id="statusBar">⚠ ACCESS DENIED — INVALID CREDENTIALS</div>
 
-        function handleSubscribe() {
-            // Open YouTube channel
-            window.open('https://www.youtube.com/@Ultra-wk8ed', '_blank');
-            
-            // Change button appearance to gray
-            const btn = document.getElementById('subBtn');
-            btn.innerText = "CHECKING...";
-            btn.classList.remove('bg-red-600', 'hover:bg-red-700');
-            btn.classList.add('bg-gray-600', 'cursor-not-allowed');
-            
-            // Move to PIN step after a brief delay
-            setTimeout(() => {
-                showStep('step2');
-            }, 2000);
-        }
+    <button id="enter" class="cyber-btn" onclick="checkAccess()">
+      [ AUTHENTICATE ]<span class="blink">_</span>
+    </button>
+  </div>
 
-        function checkCodes() {
-            const groupCode = document.getElementById('groupInput').value.trim();
-            const verifyCode = document.getElementById('verifyInput').value.trim();
+  <div id="step3" class="step">
+    <span class="success-icon">✔</span>
+    <div class="success-text">ACCESS GRANTED</div>
+    <div class="success-msg">Identity verified. Welcome.</div>
+    <a href="https://chat.whatsapp.com/Lw0SnJD5yTcFjAwdxcLDlX?mode=gi_t" class="cyber-btn">
+      [ GO TO GROUP ]<span class="blink">_</span>
+    </a>
+  </div>
 
-            if (groupCode === "7639" && verifyCode === "8629") {
-                showStep('step3');
-            } else {
-                alert("Incorrect codes! Please check and try again.");
-            }
-        }
-    </script>
+</div>
+
+<script>
+  // --- Matrix Rain Effect ---
+  const canvas = document.getElementById('matrix');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const cols = Math.floor(canvas.width / 18);
+  const drops = Array(cols).fill(1);
+  const chars = 'アイウエオカキクケコZIHAN01010110ACCESSDENY¥§¶';
+  
+  function drawMatrix() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00ff41';
+    ctx.font = '14px Share Tech Mono';
+    drops.forEach((y, i) => {
+      const ch = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(ch, i * 18, y * 18);
+      if (y * 18 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }
+  setInterval(drawMatrix, 50);
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  // --- Step Logic ---
+  
+  // Start 5-second processing on load
+  window.onload = function() {
+    setTimeout(() => {
+      showStep('step1');
+    }, 5000);
+  };
+
+  function showStep(id) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function handleSubscribe() {
+    // Open YouTube channel
+    window.open('https://www.youtube.com/@Ultra-wk8ed', '_blank');
+    
+    // Change button appearance to checking mode
+    const btn = document.getElementById('subBtn');
+    btn.innerHTML = "[ CHECKING... ]<span class='blink'>_</span>";
+    btn.classList.add('disabled');
+    
+    // Move to PIN step after a brief delay
+    setTimeout(() => {
+      showStep('step2');
+    }, 2000);
+  }
+
+  // Allow Enter key to trigger authentication on Step 2
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('step2').classList.contains('active')) {
+      checkAccess();
+    }
+  });
+
+  function checkAccess() {
+    const p1 = document.getElementById('pass1');
+    const p2 = document.getElementById('pass2');
+    const status = document.getElementById('statusBar');
+
+    p1.classList.remove('error','ok');
+    p2.classList.remove('error','ok');
+
+    // Updated to match your exact passwords
+    const v1 = p1.value === 'Zibohanss';
+    const v2 = p2.value === 'begrostup';
+
+    if (v1 && v2) {
+      p1.classList.add('ok');
+      p2.classList.add('ok');
+      status.classList.remove('visible');
+
+      setTimeout(() => {
+        showStep('step3');
+      }, 400);
+
+    } else {
+      if (!v1) p1.classList.add('error');
+      if (!v2) p2.classList.add('error');
+      status.classList.add('visible');
+      
+      // Shake animation
+      const gate = document.querySelector('.gate');
+      gate.style.transform = 'translateX(-6px)';
+      setTimeout(() => gate.style.transform = 'translateX(6px)', 80);
+      setTimeout(() => gate.style.transform = 'translateX(-4px)', 160);
+      setTimeout(() => gate.style.transform = 'translateX(0)', 240);
+    }
+  }
+</script>
 </body>
 </html>
-
